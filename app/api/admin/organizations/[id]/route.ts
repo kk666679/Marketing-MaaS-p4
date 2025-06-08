@@ -1,8 +1,12 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { auth } from "@clerk/nextjs/server"
-import { neon } from "@neondatabase/serverless"
 
-const sql = neon(process.env.DATABASE_URL!)
+// Mock organization data
+const mockOrganizations = [
+  { id: "1", name: "Acme Corp", members: 150 },
+  { id: "2", name: "TechStart Inc", members: 75 },
+  { id: "3", name: "Global Solutions", members: 200 },
+]
 
 export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
   try {
@@ -13,23 +17,16 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
 
     const orgId = params.id
 
-    // Check if organization exists and get details for logging
-    const [organization] = await sql`
-      SELECT * FROM organizations WHERE id = ${orgId}
-    `
+    // Check if organization exists in mock data
+    const organization = mockOrganizations.find(org => org.id === orgId)
 
     if (!organization) {
       return NextResponse.json({ error: "Organization not found" }, { status: 404 })
     }
 
-    // Delete organization (cascade will handle related records)
-    await sql`DELETE FROM organizations WHERE id = ${orgId}`
-
-    // Log the action
-    await sql`
-      INSERT INTO audit_logs (user_id, action, resource_type, resource_id, details, severity)
-      VALUES (${userId}, 'delete', 'organization', ${orgId}, ${JSON.stringify({ name: organization.name })}, 'high')
-    `
+    // In a real app, you would delete from database here
+    // For demo purposes, we'll just return success
+    console.log(`Mock deletion of organization: ${organization.name}`)
 
     return NextResponse.json({ success: true })
   } catch (error) {

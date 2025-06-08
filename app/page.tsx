@@ -3,7 +3,7 @@
 import { motion } from "framer-motion"
 import { Button } from "@/components/ui/button"
 import { AnimatedCard } from "@/components/ui/animated-card"
-import { VideoBackground } from "@/components/ui/video-background"
+import { HeroBackground } from "@/components/ui/hero-background"
 import { LiveChat } from "@/components/ui/live-chat"
 import { NewsletterSignup } from "@/components/ui/newsletter-signup"
 import { PricingCalculator } from "@/components/ui/pricing-calculator"
@@ -128,7 +128,7 @@ export default function HomePage() {
         ref={heroRef}
         className="relative container mx-auto px-4 py-20 overflow-hidden min-h-screen flex items-center"
       >
-        <VideoBackground />
+        <HeroBackground />
         <FloatingElements />
 
         <motion.div

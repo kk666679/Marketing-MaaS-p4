@@ -1,164 +1,71 @@
 "use client"
 
-import type React from "react"
-import { useState, useEffect } from "react"
+import { useState } from "react"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Trash2 } from "lucide-react"
+import { Building, Search, Plus } from "lucide-react"
 
 interface Organization {
-  id: string
+  id: number
   name: string
-  description: string
-  tier: string
+  members: number
+  status: string
 }
 
-const OrganizationManager = () => {
-  const [organizations, setOrganizations] = useState<Organization[]>([])
-  const [showCreateForm, setShowCreateForm] = useState(false)
-  const [newOrg, setNewOrg] = useState({ name: "", description: "", tier: "starter" })
-  const [isCreating, setIsCreating] = useState(false)
-
-  useEffect(() => {
-    // Fetch organizations from API (replace with your actual API endpoint)
-    const fetchOrganizations = async () => {
-      try {
-        const response = await fetch("/api/admin/organizations")
-        if (response.ok) {
-          const data = await response.json()
-          setOrganizations(data)
-        }
-      } catch (error) {
-        console.error("Failed to fetch organizations:", error)
-      }
-    }
-
-    fetchOrganizations()
-  }, [])
-
-  const handleCreateOrganization = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setIsCreating(true)
-
-    try {
-      const response = await fetch("/api/admin/organizations", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(newOrg),
-      })
-
-      if (response.ok) {
-        const createdOrg = await response.json()
-        setOrganizations([...organizations, createdOrg])
-        setNewOrg({ name: "", description: "", tier: "starter" })
-        setShowCreateForm(false)
-      }
-    } catch (error) {
-      console.error("Failed to create organization:", error)
-    } finally {
-      setIsCreating(false)
-    }
-  }
-
-  const handleDeleteOrganization = async (orgId: string) => {
-    if (!confirm("Are you sure you want to delete this organization?")) return
-
-    try {
-      const response = await fetch(`/api/admin/organizations/${orgId}`, {
-        method: "DELETE",
-      })
-
-      if (response.ok) {
-        setOrganizations(organizations.filter((org) => org.id !== orgId))
-      }
-    } catch (error) {
-      console.error("Failed to delete organization:", error)
-    }
-  }
-
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    setNewOrg({ ...newOrg, [e.target.name]: e.target.value })
-  }
-
-  const handleTierChange = (value: string) => {
-    setNewOrg({ ...newOrg, tier: value })
-  }
+export function OrganizationManager() {
+  const [organizations, setOrganizations] = useState<Organization[]>([
+    { id: 1, name: "Acme Corp", members: 150, status: "active" },
+    { id: 2, name: "TechStart Inc", members: 75, status: "active" },
+    { id: 3, name: "Global Solutions", members: 200, status: "active" },
+  ])
 
   return (
-    <div>
-      <div className="flex justify-between items-center mb-4">
-        <h1 className="text-2xl font-bold">Organization Management</h1>
-        <Button onClick={() => setShowCreateForm(true)}>Create Organization</Button>
-      </div>
-
-      {showCreateForm && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Create New Organization</CardTitle>
-            <CardDescription>Fill out the form below to create a new organization.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleCreateOrganization}>
-              <div className="grid gap-4">
-                <div>
-                  <Label htmlFor="name">Name</Label>
-                  <Input type="text" id="name" name="name" value={newOrg.name} onChange={handleInputChange} required />
-                </div>
-                <div>
-                  <Label htmlFor="description">Description</Label>
-                  <Input
-                    type="text"
-                    id="description"
-                    name="description"
-                    value={newOrg.description}
-                    onChange={handleInputChange}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="tier">Tier</Label>
-                  <Select onValueChange={handleTierChange} defaultValue={newOrg.tier}>
-                    <SelectTrigger className="w-[180px]">
-                      <SelectValue placeholder="Select a tier" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="starter">Starter</SelectItem>
-                      <SelectItem value="pro">Pro</SelectItem>
-                      <SelectItem value="enterprise">Enterprise</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+    <Card>
+      <CardHeader>
+        <div className="flex items-center justify-between">
+          <CardTitle className="flex items-center">
+            <Building className="w-5 h-5 mr-2" />
+            Organizations
+          </CardTitle>
+          <Button>
+            <Plus className="w-4 h-4 mr-2" />
+            Add Organization
+          </Button>
+        </div>
+      </CardHeader>
+      <CardContent>
+        <div className="mb-4">
+          <div className="relative">
+            <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+            <Input
+              placeholder="Search organizations..."
+              className="pl-10"
+            />
+          </div>
+        </div>
+        <div className="space-y-4">
+          {organizations.map((org) => (
+            <div
+              key={org.id}
+              className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50"
+            >
+              <div>
+                <h3 className="font-medium">{org.name}</h3>
+                <p className="text-sm text-gray-500">{org.members} members</p>
               </div>
-              <Button type="submit" className="mt-4" disabled={isCreating}>
-                {isCreating ? "Creating..." : "Create"}
-              </Button>
-            </form>
-          </CardContent>
-        </Card>
-      )}
-
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-4">
-        {organizations.map((org) => (
-          <Card key={org.id}>
-            <CardHeader>
-              <CardTitle>{org.name}</CardTitle>
-              <CardDescription>{org.description}</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <p>Tier: {org.tier}</p>
-            </CardContent>
-            <CardFooter className="flex justify-end">
-              <Button variant="outline" size="sm" onClick={() => handleDeleteOrganization(org.id)}>
-                <Trash2 className="w-4 h-4" />
-              </Button>
-            </CardFooter>
-          </Card>
-        ))}
-      </div>
-    </div>
+              <div className="flex items-center space-x-2">
+                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                  {org.status}
+                </span>
+                <Button variant="outline" size="sm">
+                  Manage
+                </Button>
+              </div>
+            </div>
+          ))}
+        </div>
+      </CardContent>
+    </Card>
   )
 }
-
-export default OrganizationManager

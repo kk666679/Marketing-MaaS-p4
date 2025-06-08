@@ -1,15 +1,15 @@
 "use client"
 
-import type React from "react"
-
-import { useState, useEffect } from "react"
-import { Checkbox } from "@/components/ui/checkbox"
+import { useState } from "react"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Save, Loader2 } from "lucide-react"
+import { Switch } from "@/components/ui/switch"
+import { Key, Save } from "lucide-react"
 
 interface Permission {
   id: string
   name: string
+  description: string
 }
 
 interface Role {
@@ -17,147 +17,127 @@ interface Role {
   name: string
 }
 
-interface PermissionMatrixProps {
-  permissions: Permission[]
-  roles: Role[]
-  rolePermissions: { [roleId: string]: string[] }
-}
+export function PermissionMatrix() {
+  const [permissions] = useState<Permission[]>([
+    { id: "read", name: "Read", description: "View content and data" },
+    { id: "write", name: "Write", description: "Create and edit content" },
+    { id: "delete", name: "Delete", description: "Remove content and data" },
+    { id: "admin", name: "Admin", description: "Full administrative access" },
+    { id: "manage_users", name: "Manage Users", description: "Add, edit, and remove users" },
+    { id: "manage_roles", name: "Manage Roles", description: "Create and modify roles" },
+  ])
 
-const PermissionMatrix: React.FC<PermissionMatrixProps> = ({ permissions, roles, rolePermissions }) => {
-  const [matrix, setMatrix] = useState<{ [roleId: string]: { [permissionId: string]: boolean } }>({})
-  const [changes, setChanges] = useState<{ [roleId: string]: string[] }>({})
-  const [saving, setSaving] = useState(false)
+  const [roles] = useState<Role[]>([
+    { id: "super_admin", name: "Super Admin" },
+    { id: "admin", name: "Admin" },
+    { id: "manager", name: "Manager" },
+    { id: "user", name: "User" },
+  ])
 
-  useEffect(() => {
-    // Initialize the matrix based on the provided rolePermissions
-    const initialMatrix: { [roleId: string]: { [permissionId: string]: boolean } } = {}
-    roles.forEach((role) => {
-      initialMatrix[role.id] = {}
-      permissions.forEach((permission) => {
-        initialMatrix[role.id][permission.id] = rolePermissions[role.id]?.includes(permission.id) || false
-      })
-    })
-    setMatrix(initialMatrix)
-  }, [permissions, roles, rolePermissions])
+  const [matrix, setMatrix] = useState<Record<string, Record<string, boolean>>>({
+    super_admin: {
+      read: true,
+      write: true,
+      delete: true,
+      admin: true,
+      manage_users: true,
+      manage_roles: true,
+    },
+    admin: {
+      read: true,
+      write: true,
+      delete: true,
+      admin: false,
+      manage_users: true,
+      manage_roles: false,
+    },
+    manager: {
+      read: true,
+      write: true,
+      delete: false,
+      admin: false,
+      manage_users: false,
+      manage_roles: false,
+    },
+    user: {
+      read: true,
+      write: false,
+      delete: false,
+      admin: false,
+      manage_users: false,
+      manage_roles: false,
+    },
+  })
 
-  const handleCheckboxChange = (roleId: string, permissionId: string, checked: boolean) => {
-    // Update the matrix state
-    setMatrix((prevMatrix) => ({
-      ...prevMatrix,
+  const togglePermission = (roleId: string, permissionId: string) => {
+    setMatrix(prev => ({
+      ...prev,
       [roleId]: {
-        ...prevMatrix[roleId],
-        [permissionId]: checked,
-      },
+        ...prev[roleId],
+        [permissionId]: !prev[roleId][permissionId]
+      }
     }))
-
-    // Update the changes state
-    setChanges((prevChanges) => {
-      const currentChanges = { ...prevChanges }
-
-      if (!currentChanges[roleId]) {
-        currentChanges[roleId] = rolePermissions[roleId] ? [...rolePermissions[roleId]] : []
-      }
-
-      const permissionIndex = currentChanges[roleId].indexOf(permissionId)
-
-      if (checked && permissionIndex === -1) {
-        // Add permission to changes if checked and not already present
-        currentChanges[roleId] = [...currentChanges[roleId], permissionId]
-      } else if (!checked && permissionIndex !== -1) {
-        // Remove permission from changes if unchecked and present
-        currentChanges[roleId] = [
-          ...currentChanges[roleId].slice(0, permissionIndex),
-          ...currentChanges[roleId].slice(permissionIndex + 1),
-        ]
-      }
-
-      // Remove role from changes if no changes for that role
-      if (currentChanges[roleId].length === 0 && rolePermissions[roleId]?.length === 0) {
-        delete currentChanges[roleId]
-      }
-
-      return currentChanges
-    })
-  }
-
-  const handleSaveChanges = async () => {
-    setSaving(true)
-
-    try {
-      const response = await fetch("/api/admin/permissions/bulk-update", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ changes }),
-      })
-
-      if (response.ok) {
-        setChanges({})
-        // Show success message
-        alert("Permissions updated successfully!")
-      }
-    } catch (error) {
-      console.error("Failed to save permission changes:", error)
-      alert("Failed to save changes. Please try again.")
-    } finally {
-      setSaving(false)
-    }
   }
 
   return (
-    <div>
-      <div className="overflow-x-auto">
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead>
-            <tr>
-              <th></th>
-              {roles.map((role) => (
-                <th
-                  key={role.id}
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                >
-                  {role.name}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
-            {permissions.map((permission) => (
-              <tr key={permission.id}>
-                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{permission.name}</td>
+    <Card>
+      <CardHeader>
+        <div className="flex items-center justify-between">
+          <CardTitle className="flex items-center">
+            <Key className="w-5 h-5 mr-2" />
+            Permission Matrix
+          </CardTitle>
+          <Button>
+            <Save className="w-4 h-4 mr-2" />
+            Save Changes
+          </Button>
+        </div>
+      </CardHeader>
+      <CardContent>
+        <div className="overflow-x-auto">
+          <table className="w-full border-collapse">
+            <thead>
+              <tr>
+                <th className="text-left p-3 border-b font-medium">Permission</th>
                 {roles.map((role) => (
-                  <td key={role.id} className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    <Checkbox
-                      checked={matrix[role.id]?.[permission.id] || false}
-                      onCheckedChange={(checked) => handleCheckboxChange(role.id, permission.id, !!checked)}
-                    />
-                  </td>
+                  <th key={role.id} className="text-center p-3 border-b font-medium min-w-[120px]">
+                    {role.name}
+                  </th>
                 ))}
               </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-      <div className="mt-4">
-        <Button
-          onClick={handleSaveChanges}
-          disabled={Object.keys(changes).length === 0 || saving}
-          className="bg-green-600 hover:bg-green-700"
-        >
-          {saving ? (
-            <>
-              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-              Saving...
-            </>
-          ) : (
-            <>
-              <Save className="w-4 h-4 mr-2" />
-              Save Changes ({Object.keys(changes).length})
-            </>
-          )}
-        </Button>
-      </div>
-    </div>
+            </thead>
+            <tbody>
+              {permissions.map((permission) => (
+                <tr key={permission.id} className="hover:bg-gray-50">
+                  <td className="p-3 border-b">
+                    <div>
+                      <div className="font-medium">{permission.name}</div>
+                      <div className="text-sm text-gray-500">{permission.description}</div>
+                    </div>
+                  </td>
+                  {roles.map((role) => (
+                    <td key={role.id} className="p-3 border-b text-center">
+                      <Switch
+                        checked={matrix[role.id]?.[permission.id] || false}
+                        onCheckedChange={() => togglePermission(role.id, permission.id)}
+                      />
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        <div className="mt-6 p-4 bg-blue-50 rounded-lg">
+          <h4 className="font-medium text-blue-900 mb-2">Permission Guidelines</h4>
+          <ul className="text-sm text-blue-800 space-y-1">
+            <li>• Super Admin has all permissions by default</li>
+            <li>• Admin role should have most permissions except role management</li>
+            <li>• Manager role focuses on content and team management</li>
+            <li>• User role has minimal permissions for basic functionality</li>
+          </ul>
+        </div>
+      </CardContent>
+    </Card>
   )
 }
-
-export default PermissionMatrix

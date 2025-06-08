@@ -132,12 +132,12 @@ export function Navbar() {
                 </div>
               ) : (
                 <>
-                  <SignInButton mode="redirect" redirectUrl="/sign-in">
+                  <SignInButton mode="modal">
                     <Button variant="outline" size="sm">
                       Log In
                     </Button>
                   </SignInButton>
-                  <SignUpButton mode="redirect" redirectUrl="/sign-up">
+                  <SignUpButton mode="modal">
                     <Button
                       size="sm"
                       className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
@@ -227,13 +227,13 @@ export function Navbar() {
                     </>
                   ) : (
                     <>
-                      <SignInButton mode="redirect" redirectUrl="/sign-in">
+                      <SignInButton mode="modal">
                         <Button variant="outline" className="w-full">
                           <LogIn className="w-4 h-4 mr-2" />
                           Log In
                         </Button>
                       </SignInButton>
-                      <SignUpButton mode="redirect" redirectUrl="/sign-up">
+                      <SignUpButton mode="modal">
                         <Button className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700">
                           Sign Up Free
                         </Button>

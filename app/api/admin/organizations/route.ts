@@ -1,8 +1,12 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { auth } from "@clerk/nextjs/server"
-import { neon } from "@neondatabase/serverless"
 
-const sql = neon(process.env.DATABASE_URL!)
+// Mock organization data
+const mockOrganizations = [
+  { id: "1", name: "Acme Corp", description: "Technology company", tier: "enterprise", member_count: 150, created_at: "2024-01-15T10:00:00Z" },
+  { id: "2", name: "TechStart Inc", description: "Startup company", tier: "pro", member_count: 75, created_at: "2024-02-01T10:00:00Z" },
+  { id: "3", name: "Global Solutions", description: "Consulting firm", tier: "enterprise", member_count: 200, created_at: "2024-01-20T10:00:00Z" },
+]
 
 export async function GET() {
   try {
@@ -11,31 +15,9 @@ export async function GET() {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    // Check if user has admin permissions
-    const userPermissions = await sql`
-      SELECT p.name 
-      FROM permissions p
-      JOIN role_permissions rp ON p.id = rp.permission_id
-      JOIN user_organizations uo ON rp.role_id = uo.role_id
-      WHERE uo.user_id = ${userId}
-    `
-
-    const hasAdminAccess = userPermissions.some((p) => p.name === "admin.full")
-    if (!hasAdminAccess) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 })
-    }
-
-    const organizations = await sql`
-      SELECT 
-        o.*,
-        COUNT(uo.user_id) as member_count
-      FROM organizations o
-      LEFT JOIN user_organizations uo ON o.id = uo.organization_id
-      GROUP BY o.id
-      ORDER BY o.created_at DESC
-    `
-
-    return NextResponse.json(organizations)
+    // In a real app, you would check permissions here
+    // For demo purposes, we'll return mock data
+    return NextResponse.json(mockOrganizations)
   } catch (error) {
     console.error("Failed to fetch organizations:", error)
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })
@@ -51,19 +33,19 @@ export async function POST(request: NextRequest) {
 
     const { name, description, tier } = await request.json()
 
-    const [organization] = await sql`
-      INSERT INTO organizations (name, description, tier)
-      VALUES (${name}, ${description}, ${tier})
-      RETURNING *
-    `
+    // In a real app, you would insert into database here
+    const newOrganization = {
+      id: String(mockOrganizations.length + 1),
+      name,
+      description,
+      tier,
+      member_count: 0,
+      created_at: new Date().toISOString()
+    }
 
-    // Log the action
-    await sql`
-      INSERT INTO audit_logs (user_id, action, resource_type, resource_id, details, severity)
-      VALUES (${userId}, 'create', 'organization', ${organization.id}, ${JSON.stringify({ name, tier })}, 'medium')
-    `
+    console.log("Mock creation of organization:", newOrganization)
 
-    return NextResponse.json(organization)
+    return NextResponse.json(newOrganization)
   } catch (error) {
     console.error("Failed to create organization:", error)
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })

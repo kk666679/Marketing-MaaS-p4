@@ -1,8 +1,39 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { auth } from "@clerk/nextjs/server"
-import { neon } from "@neondatabase/serverless"
 
-const sql = neon(process.env.DATABASE_URL!)
+// Mock audit log data
+const mockLogs = [
+  {
+    created_at: "2024-03-20T14:30:00Z",
+    user_email: "john.doe@example.com",
+    action: "User Login",
+    resource_type: "Authentication",
+    resource_id: "auth_1",
+    severity: "info",
+    ip_address: "192.168.1.1",
+    details: { message: "Successful login" }
+  },
+  {
+    created_at: "2024-03-20T14:25:00Z",
+    user_email: "admin@example.com",
+    action: "Permission Update",
+    resource_type: "Role",
+    resource_id: "role_1",
+    severity: "warning",
+    ip_address: "192.168.1.2",
+    details: { message: "Modified permissions for Manager role" }
+  },
+  {
+    created_at: "2024-03-20T14:20:00Z",
+    user_email: "admin@example.com",
+    action: "Delete User",
+    resource_type: "User",
+    resource_id: "user_1",
+    severity: "error",
+    ip_address: "192.168.1.2",
+    details: { message: "Failed to delete user due to active sessions" }
+  }
+]
 
 export async function GET(request: NextRequest) {
   try {
@@ -11,64 +42,9 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const { searchParams } = new URL(request.url)
-    const action = searchParams.get("action") || ""
-    const severity = searchParams.get("severity") || ""
-    const startDate = searchParams.get("startDate") || ""
-    const endDate = searchParams.get("endDate") || ""
-    const search = searchParams.get("search") || ""
-
-    let query = `
-      SELECT 
-        al.*,
-        u.email as user_email,
-        u.first_name,
-        u.last_name
-      FROM audit_logs al
-      LEFT JOIN users u ON al.user_id = u.id
-      WHERE 1=1
-    `
-
-    const params: any[] = []
-    let paramIndex = 1
-
-    if (action) {
-      query += ` AND al.action = $${paramIndex}`
-      params.push(action)
-      paramIndex++
-    }
-
-    if (severity) {
-      query += ` AND al.severity = $${paramIndex}`
-      params.push(severity)
-      paramIndex++
-    }
-
-    if (startDate) {
-      query += ` AND al.created_at >= $${paramIndex}`
-      params.push(startDate)
-      paramIndex++
-    }
-
-    if (endDate) {
-      query += ` AND al.created_at <= $${paramIndex}`
-      params.push(endDate)
-      paramIndex++
-    }
-
-    if (search) {
-      query += ` AND (u.email ILIKE $${paramIndex} OR al.details::text ILIKE $${paramIndex})`
-      params.push(`%${search}%`)
-      paramIndex++
-    }
-
-    query += ` ORDER BY al.created_at DESC`
-
-    const logs = await sql(query, params)
-
     // Convert to CSV
     const csvHeaders = "Timestamp,User,Action,Resource Type,Resource ID,Severity,IP Address,Details\n"
-    const csvRows = logs
+    const csvRows = mockLogs
       .map((log) => {
         const timestamp = new Date(log.created_at).toISOString()
         const user = log.user_email || "System"
