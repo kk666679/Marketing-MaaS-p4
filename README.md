@@ -43,6 +43,35 @@ graph LR
     K --> L[Looker Studio]
 ```
 
+## Comprehensive Marketing Workflow With Google (A2A) Agent to Agent Integration
+```
+mermaid
+graph TD
+    A[User Creates Campaign Brief] --> B(Orchestrator Agent)
+    B --> C{Task Decomposition}
+    C --> D[Content Generation Agent]
+    C --> E[Channel Selection Agent]
+    C --> F[Budget Allocation Agent]
+    D --> G[Gemini Content Creation]
+    E --> H[Vertex AI Matching Engine]
+    F --> I[Forecasting Models]
+    G --> J[Content Approval]
+    H --> K[Channel Optimization]
+    I --> L[Budget Optimization]
+    J --> M[Campaign Deployment]
+    K --> M
+    L --> M
+    M --> N[Real-Time Analytics Agent]
+    N --> O[Performance Monitoring]
+    O --> P{Meet Targets?}
+    P -- Yes --> Q[Generate Report]
+    P -- No --> R[Optimization Agent]
+    R --> D
+    R --> E
+    R --> F
+    Q --> S[User Dashboard]
+```
+
 ### AI Agent Ecosystem
 | Agent Type | Google AI Service | Key Capabilities |
 |------------|-------------------|------------------|
