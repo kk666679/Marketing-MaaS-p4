@@ -45,7 +45,6 @@ graph LR
 
 ## Comprehensive Marketing Workflow With Google (A2A) Agent to Agent Integration
 ```
-mermaid
 graph TD
     A[User Creates Campaign Brief] --> B(Orchestrator Agent)
     B --> C{Task Decomposition}
